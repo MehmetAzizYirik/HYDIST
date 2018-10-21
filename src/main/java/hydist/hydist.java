@@ -151,7 +151,7 @@ public class hydist {
 			HelpFormatter formatter = new HelpFormatter();
 			formatter.setOptionComparator(null);
 			String header = "\nFor a list of atoms, it calculates all the possible distribution of the given number of hydrogens.";
-			String footer = "\nPlease report issues at https://github.com/MehmetAzizYirik";
+			String footer = "\nPlease report issues at https://github.com/MehmetAzizYirik/HYDIST";
 			formatter.printHelp( "java -jar hydist.jar", header, options, footer, true );
 			throw new ParseException("Problem parsing command line");
 		}
@@ -191,10 +191,10 @@ public class hydist {
 	}
 	public static void main(String[] args) throws FileNotFoundException, UnsupportedEncodingException {
 		hydist inp= null;
-		String[] args1= {"-a","CCCCCC","-v","-h","12", "-d", "C:\\Users\\mehme\\Desktop\\"};
+		//String[] args1= {"-a","CCCCCC","-v","-h","12", "-d", "C:\\Users\\mehme\\Desktop\\"};
 		try {
 			inp = new hydist();
-			inp.parseArgs(args1);
+			inp.parseArgs(args);
 			hydist.intnrun(hydist.atoms, hydist.hyd,hydist.filedir);
 		} catch (Exception e) {
 			// We don't do anything here. Apache CLI will print a usage text.
