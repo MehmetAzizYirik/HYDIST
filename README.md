@@ -34,7 +34,7 @@ This command will create jar file named specifically as "jar-with-dependencies" 
 HYDIST.jar can be run from command line with the specified arguments. An example command is given below.
 
 ```
-java -jar hydist.jar -a CCCCCC -v -h 12 -d C:\Users\mehme\Desktop\
+java -jar hydist.jar -a CCCCCC -v -h 12 -d C:\Users\UserName\Desktop\
 ```
 
 The definitions of the arguments are given below:
