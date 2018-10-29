@@ -217,10 +217,10 @@ public class HydrogenDistributor {
 	}
 	public static void main(String[] arguments) throws FileNotFoundException, UnsupportedEncodingException {
 		HydrogenDistributor distribution= null;
-		String[] arguments1= {"-a","CCCCCC","-v","-h","15", "-d", "C:\\Users\\mehme\\Desktop\\"};
+		//String[] arguments1= {"-a","CCCCCC","-v","-h","15", "-d", "C:\\Users\\mehme\\Desktop\\"};
 		try {
 			distribution = new HydrogenDistributor();
-			distribution.parseArguments(arguments1);
+			distribution.parseArguments(arguments);
 			HydrogenDistributor.initialise(HydrogenDistributor.atominfo, HydrogenDistributor.hydrogeninfo,HydrogenDistributor.filedir);
 		} catch (Exception e) {
 			// We don't do anything here. Apache CLI will print a usage text.

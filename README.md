@@ -1,10 +1,10 @@
-# HYDIST
+# HydrogenDistributor
 
 Copyright 2018 Mehmet Aziz Yirik
 
 ## Introduction
 
-HYDIST is a implicit hydrogen distributor. For a list of atoms, the algorithm calculates all the possible distributions of the given number of hydrogens.
+HydrogenDistributor is a implicit hydrogen distributor. For a list of atoms, the algorithm calculates all the possible distributions of the given number of hydrogens.
 
 ## Method 
 
@@ -19,28 +19,28 @@ It is assumed that users have git on their system and have initialised their loc
 To download HMD source code:
 
 ```
-$ git clone https://https://github.com/MehmetAzizYirik/HYDIST.git
+$ git clone https://https://github.com/MehmetAzizYirik/HydrogenDistributor.git
 ```
 ## Compiling
 
-To compile HYDIST, Apache Maven and Java 1.8 (or later) are required.
+To compile HydrogenDistributor, Apache Maven and Java 1.8 (or later) are required.
 ```
-HYDIST/$ mvn package
+HydrogenDistributor/$ mvn package
 ```
 This command will create jar file named specifically as "jar-with-dependencies" under target folder.
 
 ## Usage
 
-HYDIST.jar can be run from command line with the specified arguments. An example command is given below.
+HydrogenDistributor.jar can be run from command line with the specified arguments. An example command is given below.
 
 ```
-java -jar hydist.jar -a CCCCCC -v -h 12 -d C:\Users\UserName\Desktop\
+java -jar HydrogenDistributor.jar -a CCCCCC -v -h 12 -d C:\Users\UserName\Desktop\
 ```
 
 The definitions of the arguments are given below:
 
 ```
-usage: java -jar hydist.jar -a <arg> [-v] -h <arg> -d <arg>
+usage: java -jar HydrogenDistributor.jar -a <arg> [-v] -h <arg> -d <arg>
 
 For a list of atoms, it calculates all the possible distribution of the
 given number of hydrogens.
@@ -49,16 +49,16 @@ given number of hydrogens.
  -h,--hydrogens <arg>   The number of hydrogens to distribute (required)
  -d,--filedir <arg>     The file directory to store the output (required)
 
-Please report issues at https://github.com/MehmetAzizYirik/HYDIST
+Please report issues at https://github.com/MehmetAzizYirik/HydrogenDistributor
 
 ```
 
 ## Running the Tests
 
-For the hydist class, a test class called test_hydist is built. This test class includes the tests of the main functions. 
+For the HydrogenDistributor class, a test class called test_HydrogenDistributor is built. This test class includes the tests of the main functions. 
 
 ## License
-This project is licensed under the MIT License - see the [LICENSE.md](https://github.com/MehmetAzizYirik/HYDIST/blob/master/LICENSE) file for details
+This project is licensed under the MIT License - see the [LICENSE.md](https://github.com/MehmetAzizYirik/HydrogenDistributor/blob/master/LICENSE) file for details
 
 ## Authors
 
