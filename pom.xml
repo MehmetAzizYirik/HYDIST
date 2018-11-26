@@ -22,6 +22,116 @@
     	<artifactId>commons-cli</artifactId>
     	<version>1.4</version>
 	</dependency>
+	<dependency>
+    	<groupId>org.openscience.cdk</groupId>
+    	<artifactId>cdk-interfaces</artifactId>
+    	<version>2.2</version>
+	</dependency>
+	<!-- https://mvnrepository.com/artifact/org.openscience.cdk/cdk-standard -->
+	<dependency>
+    	<groupId>org.openscience.cdk</groupId>
+    	<artifactId>cdk-standard</artifactId>
+    	<version>2.2</version>
+	</dependency>
+	<!-- https://mvnrepository.com/artifact/org.openscience.cdk/cdk-qsar -->
+	<dependency>
+    	<groupId>org.openscience.cdk</groupId>
+    	<artifactId>cdk-qsar</artifactId>
+    	<version>2.2</version>
+	</dependency>
+	<!-- https://mvnrepository.com/artifact/org.openscience.cdk/cdk-inchi -->
+	<dependency>
+    	<groupId>org.openscience.cdk</groupId>
+    	<artifactId>cdk-inchi</artifactId>
+    	<version>2.2</version>
+	</dependency>
+	<!-- https://mvnrepository.com/artifact/org.openscience.cdk/cdk-silent -->
+	<dependency>
+    	<groupId>org.openscience.cdk</groupId>
+    	<artifactId>cdk-silent</artifactId>
+    	<version>2.2</version>
+	</dependency>
+	<!-- https://mvnrepository.com/artifact/org.openscience.cdk/cdk-io -->
+	<dependency>
+    	<groupId>org.openscience.cdk</groupId>
+    	<artifactId>cdk-io</artifactId>
+    	<version>2.2</version>
+	</dependency>
+	<!-- https://mvnrepository.com/artifact/org.openscience.cdk/cdk -->
+	<dependency>
+    	<groupId>org.openscience.cdk</groupId>
+    	<artifactId>cdk</artifactId>
+    	<version>2.2</version>
+    	<type>pom</type>
+	</dependency>
+	<!-- https://mvnrepository.com/artifact/org.openscience.cdk/cdk-depict -->
+	<dependency>
+    	<groupId>org.openscience.cdk</groupId>
+    	<artifactId>cdk-depict</artifactId>
+    	<version>2.2</version>
+	</dependency>
+	<!-- https://mvnrepository.com/artifact/org.openscience.cdk/cdk-ctab -->
+	<dependency>
+    	<groupId>org.openscience.cdk</groupId>
+    	<artifactId>cdk-ctab</artifactId>
+    	<version>2.2</version>
+	</dependency>
+	<!-- https://mvnrepository.com/artifact/org.openscience.cdk/cdk-tool -->
+	<dependency>
+    	<groupId>org.openscience.cdk</groupId>
+    	<artifactId>cdk-tool</artifactId>
+    	<version>2.2</version>
+    	<type>pom</type>
+	</dependency>
+	<!-- https://mvnrepository.com/artifact/org.openscience.cdk/cdk-formula -->
+	<dependency>
+    	<groupId>org.openscience.cdk</groupId>
+    	<artifactId>cdk-formula</artifactId>
+    	<version>2.2</version>
+	</dependency>
+	<!-- https://mvnrepository.com/artifact/org.openscience.cdk/cdk-core -->
+	<dependency>
+	    <groupId>org.openscience.cdk</groupId>
+	    <artifactId>cdk-core</artifactId>
+	    <version>2.2</version>
+	</dependency>
+	<!-- https://mvnrepository.com/artifact/org.openscience.cdk/cdk-structgen -->
+	<dependency>
+    	<groupId>org.openscience.cdk</groupId>
+    	<artifactId>cdk-structgen</artifactId>
+    	<version>2.2</version>
+	</dependency>
+	<!-- https://mvnrepository.com/artifact/org.openscience.cdk/cdk-data -->
+	<dependency>
+    	<groupId>org.openscience.cdk</groupId>
+    	<artifactId>cdk-data</artifactId>
+    	<version>2.2</version>
+    	<scope>test</scope>
+	</dependency>	
+	<!-- https://mvnrepository.com/artifact/junit/junit -->
+	<dependency>
+    	<groupId>junit</groupId>
+    	<artifactId>junit</artifactId>
+    	<version>4.12</version>
+    	<scope>test</scope>
+	</dependency>
+	<!-- https://mvnrepository.com/artifact/commons-cli/commons-cli -->
+	<dependency>
+    	<groupId>commons-cli</groupId>
+    	<artifactId>commons-cli</artifactId>
+    	<version>1.4</version>
+	</dependency>
+	<dependency>
+   		<groupId>org.openscience.cdk</groupId>
+   		<artifactId>cdk-valencycheck</artifactId>
+   		<version>2.2</version>
+	</dependency>
+	<!-- https://mvnrepository.com/artifact/org.apache.commons/commons-compress -->
+	<dependency>
+    	<groupId>org.apache.commons</groupId>
+    	<artifactId>commons-compress</artifactId>
+    	<version>1.18</version>
+	</dependency>
   </dependencies>
   <build>
   	<directory>target</directory>
@@ -55,9 +165,10 @@
           				<mainClass>hydrogenDistributor/HydrogenDistributor</mainClass>
         			</manifest>
       			</archive>
-      			<descriptorRefs>
+        		<finalName>HydrogenDistributor</finalName>   
+        		<descriptorRefs>
         			<descriptorRef>jar-with-dependencies</descriptorRef>
-      			</descriptorRefs>
+      			</descriptorRefs>               
     		</configuration>
   		</plugin> 
 	</plugins>
