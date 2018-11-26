@@ -125,7 +125,9 @@ public class HydrogenDistributor {
 		long endTime = System.nanoTime()- startTime;
         double seconds = (double) endTime / 1000000000.0;
 		DecimalFormat d = new DecimalFormat(".###");
-		System.out.println("Duration:"+" "+d.format(seconds));
+		if(verbose) {
+			System.out.println("Duration:"+" "+d.format(seconds));
+		}
 		return HydrogenDistributor.distributions;
 	}
 	
