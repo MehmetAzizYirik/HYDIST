@@ -1,15 +1,16 @@
 package hydrogenDistributor;
 
 import java.io.FileNotFoundException;
-import java.io.PrintWriter;
+//import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
+import java.text.DecimalFormat;
+//import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
+//import java.util.Collections;
+//import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
+//import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.cli.CommandLine;
@@ -19,164 +20,189 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-
+//import org.openscience.cdk.interfaces.IAtom;
+import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.interfaces.IChemObjectBuilder;
+//import org.openscience.cdk.interfaces.IElement;
+import org.openscience.cdk.interfaces.IIsotope;
+import org.openscience.cdk.interfaces.IMolecularFormula;
+import org.openscience.cdk.silent.SilentChemObjectBuilder;
+import org.openscience.cdk.tools.manipulator.MolecularFormulaManipulator;
 
 
 public class HydrogenDistributor {
-	public static  HashSet<String> duplicateCheck = new HashSet<String>(); 
-	public static  HashSet<String> distributions = new HashSet<String>(); 
-	public static int hydrogens;
+	public static IChemObjectBuilder builder =SilentChemObjectBuilder.getInstance();
+	public static  HashSet<IAtomContainer> distributions = new HashSet<IAtomContainer>();
+	public static IMolecularFormula formula=null;
+	public static IAtomContainer acontainer;
+	public static Map<Integer, Integer> capacities;
 	public static boolean verbose = false;
-	public static String hydrogeninfo=null;
-	public static String atominfo= null;
-	public static String filedir="";
-	public static PrintWriter writer;
-	public static Map<Character, Integer> valenceinfo; 
+	public static int size;
+	public static int carbons;
+	public static int[] capacity;
+	
 	static {
 		//The atom valences from CDK.
-		valenceinfo = new HashMap<Character, Integer>();
+		capacities = new HashMap<Integer, Integer>();
 			
-		valenceinfo.put('C', 4);
-		valenceinfo.put('N', 5);
-		valenceinfo.put('O', 2);
-		valenceinfo.put('S', 6);
-		valenceinfo.put('P', 5);
-		valenceinfo.put('F', 1);
-		valenceinfo.put('I', 7);
-		valenceinfo.put('H', 1);
+		capacities.put(6, 3);
+		capacities.put(7, 4);
+		capacities.put(8, 1);
+		capacities.put(16, 5);
+		capacities.put(15, 4);
+		capacities.put(9, 0);
+		capacities.put(53, 6);
+		capacities.put(1, 0);
 	}
 	
 	/**
-	 * The function initialises the output file and calls starNbar function
-	 * for the hydrogen distribution.
+	 * The basic functions used in the hydrogen distributor.
 	 */
 	
-	public static HashSet<String> initialise(String atominfo, String hydrogeninfo, String filedir) throws FileNotFoundException, UnsupportedEncodingException {
-		writer = new PrintWriter(filedir+"HydrogenDistributorOutput.txt", "UTF-8");
-		writer.println("The list of hydrogen distributions: ");
-		hydrogens=Integer.parseInt(hydrogeninfo);
-		List<Integer> array=new ArrayList<Integer>(Collections.nCopies(atominfo.length(), 0));
-		if(verbose) {
-			System.out.println("Distributing the "+hydrogens+" "+"hydrogens to the atoms..." );
+	/**
+	 * Function sets the maximum capacities of the atoms. The maximum capacity is 1 less than the atom's valence.
+	 * If the valence was considered as the max, we would have already saturated atoms.
+	 */
+	
+	public static int[] setCapacity(IAtomContainer ac) {
+		int[] capacity = new int[ac.getAtomCount()];
+		for(int i=0;i<ac.getAtomCount();i++) {
+			capacity[i]=capacities.get(ac.getAtom(i).getAtomicNumber());
 		}
-		starNbar(atominfo.length(),Integer.parseInt(hydrogeninfo),array,HydrogenDistributor.setValences(atominfo));
-		for(String distribution:distributions) {
-			System.out.println(distribution);
-		}
+		HydrogenDistributor.capacity=capacity;
+		return capacity;
+	}
+	
+	/**
+	 * To initialise the inputs and record the duration time.
+	 */
+	
+	public static HashSet<IAtomContainer> initialise(IMolecularFormula formula) throws FileNotFoundException, UnsupportedEncodingException, CloneNotSupportedException {
+		long startTime = System.nanoTime(); //Recording the duration time.
+		int hydrogen=formula.getIsotopeCount(builder.newInstance(IIsotope.class, "H"));
+		HydrogenDistributor.carbons=formula.getIsotopeCount(builder.newInstance(IIsotope.class, "C"));
 		if(verbose) {
-			writer.println("Number of possible distributions is :"+" "+distributions.size());
+			System.out.println("For molecular formula "+ MolecularFormulaManipulator.getString(formula)+" "+",calculating all the possible distributions of "+hydrogen+" "+"hydrogens ..." );
+		}
+		formula.removeIsotope(builder.newInstance(IIsotope.class, "H"));
+		IAtomContainer ac=MolecularFormulaManipulator.getAtomContainer(formula);
+		HydrogenDistributor.acontainer=ac;
+		HydrogenDistributor.size=ac.getAtomCount();
+		setCapacity(ac);
+		int[] array = new int[0];
+		distribute(hydrogen,array);
+		if(verbose) {
 			System.out.println("Number of possible distributions is :"+" "+distributions.size());
 		}
-		writer.close();
+		long endTime = System.nanoTime()- startTime;
+        double seconds = (double) endTime / 1000000000.0;
+		DecimalFormat d = new DecimalFormat(".###");
+		System.out.println("Duration:"+" "+d.format(seconds));
 		return HydrogenDistributor.distributions;
 	}
 	
 	/**
-	 * Function sets the formula based on the hydrogen distribution.
+	 * Function sets the implicit hydrogens of the atoms.
 	 */
 	
-	public static String setFormula(String atominfo, List<Integer> distributions) {
-		String formula="";
-		for(int i=0;i<atominfo.length();i++) {
-			if(distributions.get(i)!=0) {
-				formula=formula+atominfo.charAt(i)+distributions.get(i);
-			}else {
-				formula=formula+atominfo.charAt(i);
+	public static IAtomContainer setHydrogens(IAtomContainer ac,int[] distribution) throws CloneNotSupportedException {
+		IAtomContainer ac2=ac.clone();
+		for(int i=0;i<distribution.length;i++) {
+			ac2.getAtom(i).setImplicitHydrogenCount(distribution[i]);
+		}
+		return ac2;
+	}
+	
+	/** 
+	 * Distributes the hydrogens to the atoms in all the possible ways.
+	 */
+	
+	public static void distribute(int hydrogen,int[]arr) throws CloneNotSupportedException {
+		if(hydrogen == 0){
+			if(arr[0]==0 && arr.length>carbons) { 
+				/**
+				 * If the array starts with 0, the size should be longer than number of carbons.
+				 * Otherwise, it would be the symmetric distribution of hydrogens into carbons
+				 * like {3,3,0,0,0,0} and {0,0,0,0,3,3}.
+				 */
+				distributions.add(setHydrogens(acontainer,arr));
+			}else if(arr[0]!=0) {
+				distributions.add(setHydrogens(acontainer,arr));
 			}
-		}
-		return formula;
-	}
-	
-	/**
-	 * Setting the valences of the given element symbols
-	 */
-	
-	public static List<Integer> setValences(String atominfo){
-		List<Integer> valences=new ArrayList<Integer>();
-		for(int i=0;i<atominfo.length();i++) {
-			valences.add(valenceinfo.get(atominfo.charAt(i)));
-		}
-		return valences;
-	}
-	
-	/**
-	 * Summation of the list of integers.
-	 */
-	
-	public static int sum(List<Integer> list) {
-		int sum =0;
-		for(Integer i:list) {
-			sum=sum+i;
-		}
-		return sum;
-	}
-	
-	/**
-	 * Ordering a string in an alphabetical order.
-	 */
-	
-	public static String orderFormula(String formula) {
-		String[] atominfo = formula.split("(?=[A-Z])");
-        Arrays.sort(atominfo, new Comparator<String>() {
-            public int compare(String string1, String string2) {
-                String substring1 = string1.substring(0);
-                String substring2 = string2.substring(0);
-                return substring1.compareTo(substring2);
-            }
-        });
-        String str = String.join(",", atominfo); //Cleaning "," from string
-        str = str.substring(0, str.length()).replaceAll(",", "");
-        return str;
-	}
-	/**
-	 * In mathematics, the distribution of the hydrogen atoms is a chemical example of 'stars & bars'
-	 * problem (especially in combinatorics). For instance, a+b+c=10.Here, 'stars and bars'
-	 * approach calculates all the possible (a,b,c) triplets. For hydrogen distribution, the atom
-	 * valences are the restrictions (or upper limits) for these three integers.
-	 */
-	
-	public static void starNbar(int atoms, int hydrogen,List<Integer> list, List<Integer> valences) {
-		if(atoms == 0){
-			if(sum(list)==hydrogens) {
-				String formula=setFormula(atominfo,list);
-				if(!duplicateCheck.contains(orderFormula(formula))) {
-					//writer.println(setFormula(atoms,list));
-					distributions.add(orderFormula(formula));
-					duplicateCheck.add(orderFormula(formula));
+		}else if((size-arr.length)==1) {	
+			int add=Math.min(hydrogen,capacity[arr.length]); //Just to add maximum the capacity not all the remaining carbons.
+			if(acontainer.getAtom(size-2).getSymbol()!=acontainer.getAtom(size-1).getSymbol()) {	
+				distribute(0,addElement(arr,add));
+			}else {
+				if(arr[arr.length-1]<=add){
+					distribute(0,addElement(arr,add));
 				}
 			}
-		}else if(atoms==1) {
-			list.remove(0);
-			int add2=hydrogen%valences.get(0);
-			list.add(0, add2);
-			starNbar(0,0,list,valences);
 		}else { 
-			for(int i=0;i<hydrogen+1;i++) {
-				//the last atom has i stars, set them and recurse
-				list.remove(atoms-1);
-				int add=i%valences.get(atoms-1);
-				list.add(atoms-1, add);
-                starNbar(atoms-1,hydrogen-add,list,valences);
+			for(int i = Math.min(capacity[arr.length],hydrogen); i >= findMin(hydrogen,arr,arr.length); i--) {				
+				if(arr.length==0) {
+					distribute((hydrogen-i),addElement(arr,i)); //First step to add a number to the empty array.
+				}
+				if((arr.length)>0) {
+					if(arr[arr.length-1]<=i){ // It extends the array in ascending order. So no need to check duplicates
+						distribute((hydrogen-i),addElement(arr,i));
+					}
+				}
 			}
 		}
 	}
 	
-	private void parseArguments(String[] arguments) throws ParseException
+	/**
+	 * Just adding element to an array
+	 */
+	
+	public static int[] addElement(int[] a, int e) {
+        a  = Arrays.copyOf(a, a.length + 1);
+        a[a.length - 1] = e;
+        return a;
+    }
+	
+	/**
+	 * To decide at least how many hydrogen distributed to an atom, the capacities of the next ones are calculated.
+	 */
+	
+	public static int otherCapacities(int index) {
+		int count=0;
+		for(int i=index+1;i<capacity.length;i++) {
+			count=count+capacity[i];
+		}
+		return count;
+	}
+	
+	/**
+	 * Based on the capacities of the following atoms, the minimum number of hydrogens to add to an atom is calculated.
+	 */
+	
+	public static int findMin(int hydrogens,int[] arr, int index) {
+		int min=0;
+		if(hydrogens>otherCapacities(index)) {
+			min=min+(hydrogens-otherCapacities(index));
+		}/**else {
+			min=min+1;
+		}**/
+		return min;
+	}
+	
+	void parseArguments(String[] arguments) throws ParseException
 	{
 		Options options = setupOptions(arguments);	
 		CommandLineParser parser = new DefaultParser();
 		try {
 			CommandLine cmd = parser.parse(options, arguments);
-			HydrogenDistributor.atominfo = cmd.getOptionValue("atominfo");
-			HydrogenDistributor.hydrogeninfo=cmd.getOptionValue("hydrogens");
-			HydrogenDistributor.filedir=HydrogenDistributor.filedir+cmd.getOptionValue("filedir");
+			String formula = cmd.getOptionValue("formula");
+			HydrogenDistributor.formula=MolecularFormulaManipulator.getMolecularFormula(formula, builder);
 			if (cmd.hasOption("verbose")) HydrogenDistributor.verbose = true;
 		
 		} catch (ParseException e) {
 			// TODO Auto-generated catch block
 			HelpFormatter formatter = new HelpFormatter();
 			formatter.setOptionComparator(null);
-			String header = "\nFor a list of atoms, it calculates all the possible distribution of the given number of hydrogens.";
+			String header = "\nFor a molecular formula, it calculates all the possible hydrogen distributions to the atoms.";
 			String footer = "\nPlease report issues at https://github.com/MehmetAzizYirik/HydrogenDistributor";
 			formatter.printHelp( "java -jar HydrogenDistributor.jar", header, options, footer, true );
 			throw new ParseException("Problem parsing command line");
@@ -186,46 +212,29 @@ public class HydrogenDistributor {
 	private Options setupOptions(String[] arguments)
 	{
 		Options options = new Options();
-		Option atominfo = Option.builder("a")
+		Option formula = Option.builder("f")
 			     .required(true)
 			     .hasArg()
-			     .longOpt("atominfo")
-			     .desc("String of element symbols (required)")
+			     .longOpt("formula")
+			     .desc("Molecular Formula (required)")
 			     .build();
-		options.addOption(atominfo);
+		options.addOption(formula);	
 		Option verbose = Option.builder("v")
 			     .required(false)
 			     .longOpt("verbose")
 			     .desc("Print messages about the distributor")
 			     .build();
 		options.addOption(verbose);	
-		Option hydrogens = Option.builder("h")
-			     .required(true)
-			     .hasArg()
-			     .longOpt("hydrogens")
-			     .desc("The number of hydrogens to distribute (required)")
-			     .build();
-		options.addOption(hydrogens);
-		Option filedir = Option.builder("d")
-			     .required(true)
-			     .hasArg()
-			     .longOpt("filedir")
-			     .desc("The file directory to store the output (required)")
-			     .build();
-		options.addOption(filedir);
 		return options;
 	}
 	public static void main(String[] arguments) throws FileNotFoundException, UnsupportedEncodingException {
-		HydrogenDistributor distribution= null;
-		//String[] arguments1= {"-a","CCCCCC","-v","-h","15", "-d", "C:\\Users\\mehme\\Desktop\\"};
+		HydrogenDistributor distribution= new HydrogenDistributor();
+		//String[] arguments1= {"-f","C78H94N4O12","-v"};
 		try {
-			distribution = new HydrogenDistributor();
 			distribution.parseArguments(arguments);
-			HydrogenDistributor.initialise(HydrogenDistributor.atominfo, HydrogenDistributor.hydrogeninfo,HydrogenDistributor.filedir);
+			HydrogenDistributor.initialise(HydrogenDistributor.formula);
 		} catch (Exception e) {
-			// We don't do anything here. Apache CLI will print a usage text.
 			if (HydrogenDistributor.verbose) e.getCause(); 
 		}
 	}
-
 }
