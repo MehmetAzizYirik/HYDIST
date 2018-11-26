@@ -7,6 +7,7 @@ import java.io.FileNotFoundException;
 import java.io.UnsupportedEncodingException;
 
 import org.junit.Test;
+
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IChemObjectBuilder;
 import org.openscience.cdk.interfaces.IIsotope;
@@ -17,13 +18,16 @@ import org.openscience.cdk.tools.manipulator.MolecularFormulaManipulator;
 
 import hydrogenDistributor.HydrogenDistributor;
 
+
 public class Test_HydrogenDistributor extends HydrogenDistributor{
 	public static IChemObjectBuilder builder =SilentChemObjectBuilder.getInstance();
+	
 	@Test
 	
 	/**
 	 * Setting the valences of the given element symbols
 	 */
+	
 	public void test_setCapacity() {
 		IMolecularFormula formula=MolecularFormulaManipulator.getMolecularFormula("C6H6", builder);
 		formula.removeIsotope(builder.newInstance(IIsotope.class, "H"));
@@ -37,19 +41,12 @@ public class Test_HydrogenDistributor extends HydrogenDistributor{
 	/**
 	 *The distribution of the hydrogens atoms is called 'stars & bars' problem in combinatorics.  
 	 */
+	
 	public void test_distribute() throws FileNotFoundException, UnsupportedEncodingException, CloneNotSupportedException {
 		IMolecularFormula formula=MolecularFormulaManipulator.getMolecularFormula("C78H94N4O12", builder);
-		int[] array = new int[0];
-		int hydrogen=formula.getIsotopeCount(builder.newInstance(IIsotope.class, "H"));
-		HydrogenDistributor.carbons=formula.getIsotopeCount(builder.newInstance(IIsotope.class, "C"));
-		formula.removeIsotope(builder.newInstance(IIsotope.class, "H"));
-		IAtomContainer ac=MolecularFormulaManipulator.getAtomContainer(formula);
-		HydrogenDistributor.acontainer=ac;
-		HydrogenDistributor.size=ac.getAtomCount();
-		setCapacity(ac);
-		distribute(hydrogen,array);
-		//With the inputs, there should be 3638 possible hydrogen distributions.
-		assertEquals(3638,HydrogenDistributor.distributions.size());
+		initialise(formula);
+		//With the inputs, there should be 19317 possible hydrogen distributions.
+		assertEquals(19317,HydrogenDistributor.distributions.size());
 	}
 	
 	@Test
@@ -57,6 +54,7 @@ public class Test_HydrogenDistributor extends HydrogenDistributor{
 	/**
 	 * Function sets the formula based on the hydrogen distribution.
 	 */
+	
 	public void test_setHydrogens() throws CloneNotSupportedException {
 		IMolecularFormula formula=MolecularFormulaManipulator.getMolecularFormula("C6H12", builder);
 		IAtomContainer ac= MolecularFormulaManipulator.getAtomContainer(formula);

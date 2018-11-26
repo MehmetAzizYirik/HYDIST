@@ -4,12 +4,14 @@ import java.io.FileNotFoundException;
 //import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 //import java.util.ArrayList;
 import java.util.Arrays;
 //import java.util.Collections;
 //import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 //import java.util.List;
 import java.util.Map;
 
@@ -20,19 +22,22 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.openscience.cdk.interfaces.IAtom;
 //import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IChemObjectBuilder;
 //import org.openscience.cdk.interfaces.IElement;
 import org.openscience.cdk.interfaces.IIsotope;
 import org.openscience.cdk.interfaces.IMolecularFormula;
+import org.openscience.cdk.silent.AtomContainer;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
+import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 import org.openscience.cdk.tools.manipulator.MolecularFormulaManipulator;
 
 
 public class HydrogenDistributor {
 	public static IChemObjectBuilder builder =SilentChemObjectBuilder.getInstance();
-	public static  HashSet<IAtomContainer> distributions = new HashSet<IAtomContainer>();
+	public static List<IAtomContainer> distributions = new ArrayList<IAtomContainer>();
 	public static IMolecularFormula formula=null;
 	public static IAtomContainer acontainer;
 	public static Map<Integer, Integer> capacities;
@@ -74,10 +79,32 @@ public class HydrogenDistributor {
 	}
 	
 	/**
+	 * To order the atoms in the atomcontainer
+	 */
+	
+	public static IAtomContainer orderAtoms(IAtomContainer ac) {
+		IAtom temp;
+		IAtom[] atoms=AtomContainerManipulator.getAtomArray(ac);
+		for (int i = 0; i < atoms.length; i++){
+            for (int j = i + 1; j < atoms.length; j++){
+                if (capacities.get(atoms[i].getAtomicNumber()) > capacities.get(atoms[j].getAtomicNumber())) {
+                    temp = atoms[i];
+                    atoms[i] = atoms[j];
+                    atoms[j] = temp;
+                }
+            }
+        }
+		IAtomContainer ac2= new AtomContainer();
+		for(int i=0;i<atoms.length;i++) {
+			ac2.addAtom(atoms[i]);
+		}
+		return ac2;
+	}
+	/**
 	 * To initialise the inputs and record the duration time.
 	 */
 	
-	public static HashSet<IAtomContainer> initialise(IMolecularFormula formula) throws FileNotFoundException, UnsupportedEncodingException, CloneNotSupportedException {
+	public static List<IAtomContainer> initialise(IMolecularFormula formula) throws FileNotFoundException, UnsupportedEncodingException, CloneNotSupportedException {
 		long startTime = System.nanoTime(); //Recording the duration time.
 		int hydrogen=formula.getIsotopeCount(builder.newInstance(IIsotope.class, "H"));
 		HydrogenDistributor.carbons=formula.getIsotopeCount(builder.newInstance(IIsotope.class, "C"));
@@ -86,8 +113,9 @@ public class HydrogenDistributor {
 		}
 		formula.removeIsotope(builder.newInstance(IIsotope.class, "H"));
 		IAtomContainer ac=MolecularFormulaManipulator.getAtomContainer(formula);
-		HydrogenDistributor.acontainer=ac;
 		HydrogenDistributor.size=ac.getAtomCount();
+		ac=orderAtoms(ac);
+		HydrogenDistributor.acontainer=ac;
 		setCapacity(ac);
 		int[] array = new int[0];
 		distribute(hydrogen,array);
@@ -228,7 +256,7 @@ public class HydrogenDistributor {
 		return options;
 	}
 	public static void main(String[] arguments) throws FileNotFoundException, UnsupportedEncodingException {
-		HydrogenDistributor distribution= new HydrogenDistributor();
+		HydrogenDistributor distribution= new HydrogenDistributor();//C78H94N4O12
 		//String[] arguments1= {"-f","C78H94N4O12","-v"};
 		try {
 			distribution.parseArguments(arguments);
