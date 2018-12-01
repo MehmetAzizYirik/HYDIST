@@ -10,7 +10,7 @@ HydrogenDistributor is a implicit hydrogen distributor. For a list of atoms, the
 
 The algorithm relies on a combinatorial problem called "stars and bars" problem from mathematics. For instance, to calculate all the (a,b,c) triplets of the equation 'a+b+c=12', "stars and bars" approach is used. The method consider all the non-negative integer triplets satisfying the equation. To understand "stars and bars" problem in a [theoretical way](https://en.wikipedia.org/wiki/Stars_and_bars_(combinatorics)). 
 
-In this chemical problem, the algorithm calculates all the n-tuples (n indicates the number of non hydrogen atoms) for a given number of atoms and hydrogens. In this problem, "stars and bars" methods is restricted by the valences of the atoms. 
+In this chemical problem, the algorithm calculates all the n-tuples (n indicates the number of non hydrogen atoms) for a given number of atoms and hydrogens. In this problem, "stars and bars" methods is restricted by the valences of the atoms. For this class, it takes a [IMolecularFormula] (http://cdk.github.io/cdk/2.2/docs/api/org/openscience/cdk/interfaces/IMolecularFormula.html) as an input and returns a list of [IAtomContainers] (http://cdk.github.io/cdk/2.2/docs/api/org/openscience/cdk/interfaces/IAtomContainer.html) as the output. These atomcontainers are with the set implicit hydrogens- all the possible hydrogen distributions to the atoms.
 
 ## Download Source Code
 
@@ -34,22 +34,21 @@ This command will create jar file named specifically as "jar-with-dependencies" 
 HydrogenDistributor.jar can be run from command line with the specified arguments. An example command is given below.
 
 ```
-java -jar HydrogenDistributor.jar -a CCCCCC -v -h 12 -d C:\Users\UserName\Desktop\
+java -jar HydrogenDistributor.jar -f C8H10N4O2 -V
 ```
 
 The definitions of the arguments are given below:
 
 ```
-usage: java -jar HydrogenDistributor.jar -a <arg> [-v] -h <arg> -d <arg>
+usage: java -jar HydrogenDistributor.jar -f <arg> [-v]
 
-For a list of atoms, it calculates all the possible distribution of the
-given number of hydrogens.
- -a,--atoms <arg>       String of element symbols (required)
- -v,--verbose           Print messages about the distributor
- -h,--hydrogens <arg>   The number of hydrogens to distribute (required)
- -d,--filedir <arg>     The file directory to store the output (required)
+For a molecular formula, it calculates all the possible hydrogen
+distributions to the atoms.
+ -f,--formula <arg>   Molecular Formula (required)
+ -v,--verbose         Print messages about the distributor
 
-Please report issues at https://github.com/MehmetAzizYirik/HydrogenDistributor
+Please report issues at
+https://github.com/MehmetAzizYirik/HydrogenDistributor
 
 ```
 
