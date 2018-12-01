@@ -278,7 +278,7 @@ public class HydrogenDistributor {
 	}
 	public static void main(String[] arguments) throws FileNotFoundException, UnsupportedEncodingException {
 		HydrogenDistributor distribution= new HydrogenDistributor();//C78H94N4O12
-		//String[] arguments1= {"-f","C6H6O3","-v"};
+		//String[] arguments1= {"-f","C6H6O2","-v"};
 		try {
 			distribution.parseArguments(arguments);
 			HydrogenDistributor.initialise(HydrogenDistributor.formula);

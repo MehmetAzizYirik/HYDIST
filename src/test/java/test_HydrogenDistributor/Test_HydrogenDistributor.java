@@ -45,8 +45,8 @@ public class Test_HydrogenDistributor extends HydrogenDistributor{
 	public void test_distribute() throws FileNotFoundException, UnsupportedEncodingException, CloneNotSupportedException {
 		IMolecularFormula formula=MolecularFormulaManipulator.getMolecularFormula("C78H94N4O12", builder);
 		initialise(formula);
-		//With the inputs, there should be 19317 possible hydrogen distributions.
-		assertEquals(19317,HydrogenDistributor.distributions.size());
+		//With the inputs, there should be 34592 possible hydrogen distributions.
+		assertEquals(34592,HydrogenDistributor.distributions.size());
 	}
 	
 	@Test
