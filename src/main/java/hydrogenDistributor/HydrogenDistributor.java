@@ -1,18 +1,12 @@
 package hydrogenDistributor;
 
 import java.io.FileNotFoundException;
-//import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-//import java.util.ArrayList;
 import java.util.Arrays;
-//import java.util.Collections;
-//import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-//import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.cli.CommandLine;
@@ -23,10 +17,8 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.openscience.cdk.interfaces.IAtom;
-//import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IChemObjectBuilder;
-//import org.openscience.cdk.interfaces.IElement;
 import org.openscience.cdk.interfaces.IIsotope;
 import org.openscience.cdk.interfaces.IMolecularFormula;
 import org.openscience.cdk.silent.AtomContainer;
@@ -43,7 +35,7 @@ public class HydrogenDistributor {
 	public static Map<Integer, Integer> capacities;
 	public static boolean verbose = false;
 	public static int size;
-	public static int carbons;
+	public static int isotopes;
 	public static int[] capacity;
 	
 	static {
@@ -100,6 +92,7 @@ public class HydrogenDistributor {
 		}
 		return ac2;
 	}
+	
 	/**
 	 * To initialise the inputs and record the duration time.
 	 */
@@ -107,14 +100,16 @@ public class HydrogenDistributor {
 	public static List<IAtomContainer> initialise(IMolecularFormula formula) throws FileNotFoundException, UnsupportedEncodingException, CloneNotSupportedException {
 		long startTime = System.nanoTime(); //Recording the duration time.
 		int hydrogen=formula.getIsotopeCount(builder.newInstance(IIsotope.class, "H"));
-		HydrogenDistributor.carbons=formula.getIsotopeCount(builder.newInstance(IIsotope.class, "C"));
+		HydrogenDistributor.isotopes=formula.getIsotopeCount()-1;
 		if(verbose) {
 			System.out.println("For molecular formula "+ MolecularFormulaManipulator.getString(formula)+" "+",calculating all the possible distributions of "+hydrogen+" "+"hydrogens ..." );
 		}
 		formula.removeIsotope(builder.newInstance(IIsotope.class, "H"));
 		IAtomContainer ac=MolecularFormulaManipulator.getAtomContainer(formula);
 		HydrogenDistributor.size=ac.getAtomCount();
-		ac=orderAtoms(ac);
+		if(formula.getIsotopeCount()>1) {
+			ac=orderAtoms(ac);
+		}
 		HydrogenDistributor.acontainer=ac;
 		setCapacity(ac);
 		int[] array = new int[0];
@@ -143,20 +138,46 @@ public class HydrogenDistributor {
 		return ac2;
 	}
 	
+	public static int until(IAtomContainer ac) {
+		List<String> types= new ArrayList<String>();
+		int index=0;
+		for(int i=0;i<ac.getAtomCount();i++) {
+			if(!types.contains(ac.getAtom(i).getSymbol())) {
+				types.add(ac.getAtom(i).getSymbol());
+				if(types.size()==isotopes) {
+					index+=i;
+					break;
+				}
+			}
+		}
+		return index;
+	}
+	
+	public static boolean checkZeros(int[] arr) {
+		boolean check=true;
+		for(int i=0;i<until(acontainer);i++) {
+			if(arr[i]!=0) {
+				check=false;
+				break;
+			}
+		}
+		return check;
+	}
+	
 	/** 
 	 * Distributes the hydrogens to the atoms in all the possible ways.
 	 */
 	
 	public static void distribute(int hydrogen,int[]arr) throws CloneNotSupportedException {
 		if(hydrogen == 0){
-			if(arr[0]==0 && arr.length>carbons) { 
+			if(checkZeros(arr) && arr.length==size) {
 				/**
 				 * If the array starts with 0, the size should be longer than number of carbons.
 				 * Otherwise, it would be the symmetric distribution of hydrogens into carbons
 				 * like {3,3,0,0,0,0} and {0,0,0,0,3,3}.
 				 */
 				distributions.add(setHydrogens(acontainer,arr));
-			}else if(arr[0]!=0) {
+			}else if(!checkZeros(arr)) {
 				distributions.add(setHydrogens(acontainer,arr));
 			}
 		}else if((size-arr.length)==1) {	
@@ -212,9 +233,7 @@ public class HydrogenDistributor {
 		int min=0;
 		if(hydrogens>otherCapacities(index)) {
 			min=min+(hydrogens-otherCapacities(index));
-		}/**else {
-			min=min+1;
-		}**/
+		}
 		return min;
 	}
 	
@@ -259,7 +278,7 @@ public class HydrogenDistributor {
 	}
 	public static void main(String[] arguments) throws FileNotFoundException, UnsupportedEncodingException {
 		HydrogenDistributor distribution= new HydrogenDistributor();//C78H94N4O12
-		//String[] arguments1= {"-f","C78H94N4O12","-v"};
+		//String[] arguments1= {"-f","C6H6O3","-v"};
 		try {
 			distribution.parseArguments(arguments);
 			HydrogenDistributor.initialise(HydrogenDistributor.formula);
