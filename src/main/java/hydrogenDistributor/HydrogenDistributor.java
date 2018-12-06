@@ -177,7 +177,7 @@ public class HydrogenDistributor {
 				 * like {3,3,0,0,0,0} and {0,0,0,0,3,3}.
 				 */
 				distributions.add(setHydrogens(acontainer,arr));
-			}else if(!checkZeros(arr)) {
+			}else if(arr[0]!=0) {
 				distributions.add(setHydrogens(acontainer,arr));
 			}
 		}else if((size-arr.length)==1) {	
@@ -248,7 +248,6 @@ public class HydrogenDistributor {
 			if (cmd.hasOption("verbose")) HydrogenDistributor.verbose = true;
 		
 		} catch (ParseException e) {
-			// TODO Auto-generated catch block
 			HelpFormatter formatter = new HelpFormatter();
 			formatter.setOptionComparator(null);
 			String header = "\nFor a molecular formula, it calculates all the possible hydrogen distributions to the atoms.";
@@ -278,9 +277,9 @@ public class HydrogenDistributor {
 	}
 	public static void main(String[] arguments) throws FileNotFoundException, UnsupportedEncodingException {
 		HydrogenDistributor distribution= new HydrogenDistributor();//C78H94N4O12
-		//String[] arguments1= {"-f","C6H6O2","-v"};
+		String[] arguments1= {"-f","C9H12O","-v"};
 		try {
-			distribution.parseArguments(arguments);
+			distribution.parseArguments(arguments1);
 			HydrogenDistributor.initialise(HydrogenDistributor.formula);
 		} catch (Exception e) {
 			if (HydrogenDistributor.verbose) e.getCause(); 
