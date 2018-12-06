@@ -177,7 +177,7 @@ public class HydrogenDistributor {
 				 * like {3,3,0,0,0,0} and {0,0,0,0,3,3}.
 				 */
 				distributions.add(setHydrogens(acontainer,arr));
-			}else if(arr[0]!=0) {
+			}else if(!checkZeros(arr)) {
 				distributions.add(setHydrogens(acontainer,arr));
 			}
 		}else if((size-arr.length)==1) {	
@@ -277,9 +277,9 @@ public class HydrogenDistributor {
 	}
 	public static void main(String[] arguments) throws FileNotFoundException, UnsupportedEncodingException {
 		HydrogenDistributor distribution= new HydrogenDistributor();//C78H94N4O12
-		String[] arguments1= {"-f","C9H12O","-v"};
+		//String[] arguments1= {"-f","C78H94N4O12","-v"};
 		try {
-			distribution.parseArguments(arguments1);
+			distribution.parseArguments(arguments);
 			HydrogenDistributor.initialise(HydrogenDistributor.formula);
 		} catch (Exception e) {
 			if (HydrogenDistributor.verbose) e.getCause(); 
