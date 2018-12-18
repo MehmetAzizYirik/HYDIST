@@ -7,7 +7,7 @@ import java.io.FileNotFoundException;
 import java.io.UnsupportedEncodingException;
 
 import org.junit.Test;
-
+import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IChemObjectBuilder;
 import org.openscience.cdk.interfaces.IIsotope;
@@ -42,11 +42,11 @@ public class Test_HydrogenDistributor extends HydrogenDistributor{
 	 *The distribution of the hydrogens atoms is called 'stars & bars' problem in combinatorics.  
 	 */
 	
-	public void test_distribute() throws FileNotFoundException, UnsupportedEncodingException, CloneNotSupportedException {
+	public void test_distribute() throws FileNotFoundException, UnsupportedEncodingException, CloneNotSupportedException, CDKException {
 		IMolecularFormula formula=MolecularFormulaManipulator.getMolecularFormula("C78H94N4O12", builder);
 		initialise(formula);
-		//With the inputs, there should be 34592 possible hydrogen distributions.
-		assertEquals(34592,HydrogenDistributor.distributions.size());
+		//With the inputs, there should be 18292 possible hydrogen distributions.
+		assertEquals(18292,HydrogenDistributor.distributions.size());
 	}
 	
 	@Test

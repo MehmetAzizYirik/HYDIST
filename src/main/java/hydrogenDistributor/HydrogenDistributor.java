@@ -16,11 +16,15 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IChemObjectBuilder;
 import org.openscience.cdk.interfaces.IIsotope;
 import org.openscience.cdk.interfaces.IMolecularFormula;
+import org.openscience.cdk.qsar.DescriptorValue;
+import org.openscience.cdk.qsar.result.IntegerResult;
+import org.openscience.cdk.qsar.descriptors.molecular.AtomCountDescriptor;
 import org.openscience.cdk.silent.AtomContainer;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
@@ -95,9 +99,10 @@ public class HydrogenDistributor {
 	
 	/**
 	 * To initialise the inputs and record the duration time.
+	 * @throws CDKException 
 	 */
 	
-	public static List<IAtomContainer> initialise(IMolecularFormula formula) throws FileNotFoundException, UnsupportedEncodingException, CloneNotSupportedException {
+	public static List<IAtomContainer> initialise(IMolecularFormula formula) throws FileNotFoundException, UnsupportedEncodingException, CloneNotSupportedException, CDKException {
 		long startTime = System.nanoTime(); //Recording the duration time.
 		int hydrogen=formula.getIsotopeCount(builder.newInstance(IIsotope.class, "H"));
 		HydrogenDistributor.isotopes=formula.getIsotopeCount()-1;
@@ -138,46 +143,60 @@ public class HydrogenDistributor {
 		return ac2;
 	}
 	
-	public static int until(IAtomContainer ac) {
+	
+	
+	public static int zeros(IAtomContainer ac, int[] arr) throws CDKException {
 		List<String> types= new ArrayList<String>();
-		int index=0;
-		for(int i=0;i<ac.getAtomCount();i++) {
+		int zero2=0;
+		int zero=0;
+		for(int i=0;i<arr.length;i++) {
 			if(!types.contains(ac.getAtom(i).getSymbol())) {
 				types.add(ac.getAtom(i).getSymbol());
-				if(types.size()==isotopes) {
-					index+=i;
+				zero=zero+countAtomType(ac,ac.getAtom(i).getSymbol());
+				if(!checkZeros(arr,zero)) {
+					zero2+=zero;
 					break;
 				}
 			}
 		}
-		return index;
+		return zero2;
 	}
 	
-	public static boolean checkZeros(int[] arr) {
-		boolean check=true;
-		for(int i=0;i<until(acontainer);i++) {
+	public static boolean checkZeros(int[] arr, int limit) throws CDKException {
+		boolean zeros=true;
+		for(int i=0;i<limit;i++) {
 			if(arr[i]!=0) {
-				check=false;
+				zeros=false;
 				break;
 			}
 		}
-		return check;
+		return zeros;
 	}
+	
+	public static int countAtomType(IAtomContainer ac, String symbol) throws CDKException {
+		Object[] param = { symbol };
+		AtomCountDescriptor atomCounter= new AtomCountDescriptor();
+		atomCounter.setParameters(param);
+		DescriptorValue value = atomCounter.calculate(ac);
+		int result=((IntegerResult) value.getValue()).intValue();
+		return result;
+	};
 	
 	/** 
 	 * Distributes the hydrogens to the atoms in all the possible ways.
+	 * @throws CDKException 
 	 */
 	
-	public static void distribute(int hydrogen,int[]arr) throws CloneNotSupportedException {
+	public static void distribute(int hydrogen,int[]arr) throws CloneNotSupportedException, CDKException {
 		if(hydrogen == 0){
-			if(checkZeros(arr) && arr.length==size) {
+			if(isotopes==1 && arr[0]!=0) {
 				/**
 				 * If the array starts with 0, the size should be longer than number of carbons.
 				 * Otherwise, it would be the symmetric distribution of hydrogens into carbons
 				 * like {3,3,0,0,0,0} and {0,0,0,0,3,3}.
 				 */
 				distributions.add(setHydrogens(acontainer,arr));
-			}else if(!checkZeros(arr)) {
+			}else if(isotopes>1 && arr.length>=zeros(acontainer,arr)) {
 				distributions.add(setHydrogens(acontainer,arr));
 			}
 		}else if((size-arr.length)==1) {	
