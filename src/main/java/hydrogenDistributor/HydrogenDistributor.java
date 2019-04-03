@@ -6,8 +6,10 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -22,9 +24,6 @@ import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IChemObjectBuilder;
 import org.openscience.cdk.interfaces.IIsotope;
 import org.openscience.cdk.interfaces.IMolecularFormula;
-import org.openscience.cdk.qsar.DescriptorValue;
-import org.openscience.cdk.qsar.result.IntegerResult;
-import org.openscience.cdk.qsar.descriptors.molecular.AtomCountDescriptor;
 import org.openscience.cdk.silent.AtomContainer;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
@@ -33,7 +32,6 @@ import org.openscience.cdk.tools.manipulator.MolecularFormulaManipulator;
 
 public class HydrogenDistributor {
 	public static IChemObjectBuilder builder =SilentChemObjectBuilder.getInstance();
-	public static List<IAtomContainer> distributions = new ArrayList<IAtomContainer>();
 	public static IMolecularFormula formula=null;
 	public static IAtomContainer acontainer;
 	public static Map<Integer, Integer> capacities;
@@ -41,189 +39,30 @@ public class HydrogenDistributor {
 	public static int size;
 	public static int isotopes;
 	public static int[] capacity;
+	public static int[] valences;
+	public static int totalHydrogen; // Total number of hydrogens.
+	public static int[] totalAtom; // Total number of atoms.
+	public static int hydrogens2distribute;
 	
 	static {
-		//The atom valences from CDK.
+		//The atom capacities from MOLGEN book. Capacity of an atom equals to 
 		capacities = new HashMap<Integer, Integer>();
-			
 		capacities.put(6, 3);
-		capacities.put(7, 4);
+		capacities.put(7, 2);
 		capacities.put(8, 1);
-		capacities.put(16, 5);
-		capacities.put(15, 4);
+		capacities.put(16, 1);
+		capacities.put(15, 2);
 		capacities.put(9, 0);
-		capacities.put(53, 6);
+		capacities.put(53, 0);
 		capacities.put(1, 0);
+		capacities.put(17, 0);
+		capacities.put(35, 0);
+		capacities.put(53, 0);
+		
 	}
 	
 	/**
 	 * The basic functions used in the hydrogen distributor.
-	 */
-	
-	/**
-	 * Function sets the maximum capacities of the atoms. The maximum capacity is 1 less than the atom's valence.
-	 * If the valence was considered as the max, we would have already saturated atoms.
-	 */
-	
-	public static int[] setCapacity(IAtomContainer ac) {
-		int[] capacity = new int[ac.getAtomCount()];
-		for(int i=0;i<ac.getAtomCount();i++) {
-			capacity[i]=capacities.get(ac.getAtom(i).getAtomicNumber());
-		}
-		HydrogenDistributor.capacity=capacity;
-		return capacity;
-	}
-	
-	/**
-	 * To order the atoms in the atomcontainer
-	 */
-	
-	public static IAtomContainer orderAtoms(IAtomContainer ac) {
-		IAtom temp;
-		IAtom[] atoms=AtomContainerManipulator.getAtomArray(ac);
-		for (int i = 0; i < atoms.length; i++){
-            for (int j = i + 1; j < atoms.length; j++){
-                if (capacities.get(atoms[i].getAtomicNumber()) > capacities.get(atoms[j].getAtomicNumber())) {
-                    temp = atoms[i];
-                    atoms[i] = atoms[j];
-                    atoms[j] = temp;
-                }
-            }
-        }
-		IAtomContainer ac2= new AtomContainer();
-		for(int i=0;i<atoms.length;i++) {
-			ac2.addAtom(atoms[i]);
-		}
-		return ac2;
-	}
-	
-	/**
-	 * To initialise the inputs and record the duration time.
-	 * @throws CDKException 
-	 */
-	
-	public static List<IAtomContainer> initialise(IMolecularFormula formula) throws FileNotFoundException, UnsupportedEncodingException, CloneNotSupportedException, CDKException {
-		long startTime = System.nanoTime(); //Recording the duration time.
-		int hydrogen=formula.getIsotopeCount(builder.newInstance(IIsotope.class, "H"));
-		HydrogenDistributor.isotopes=formula.getIsotopeCount()-1;
-		if(verbose) {
-			System.out.println("For molecular formula "+ MolecularFormulaManipulator.getString(formula)+" "+",calculating all the possible distributions of "+hydrogen+" "+"hydrogens ..." );
-		}
-		formula.removeIsotope(builder.newInstance(IIsotope.class, "H"));
-		IAtomContainer ac=MolecularFormulaManipulator.getAtomContainer(formula);
-		HydrogenDistributor.size=ac.getAtomCount();
-		if(formula.getIsotopeCount()>1) {
-			ac=orderAtoms(ac);
-		}
-		HydrogenDistributor.acontainer=ac;
-		setCapacity(ac);
-		int[] array = new int[0];
-		distribute(hydrogen,array);
-		if(verbose) {
-			System.out.println("Number of possible distributions is :"+" "+distributions.size());
-		}
-		long endTime = System.nanoTime()- startTime;
-        double seconds = (double) endTime / 1000000000.0;
-		DecimalFormat d = new DecimalFormat(".###");
-		if(verbose) {
-			System.out.println("Duration:"+" "+d.format(seconds));
-		}
-		return HydrogenDistributor.distributions;
-	}
-	
-	/**
-	 * Function sets the implicit hydrogens of the atoms.
-	 */
-	
-	public static IAtomContainer setHydrogens(IAtomContainer ac,int[] distribution) throws CloneNotSupportedException {
-		IAtomContainer ac2=ac.clone();
-		for(int i=0;i<distribution.length;i++) {
-			ac2.getAtom(i).setImplicitHydrogenCount(distribution[i]);
-		}
-		return ac2;
-	}
-	
-	
-	
-	public static int zeros(IAtomContainer ac, int[] arr) throws CDKException {
-		List<String> types= new ArrayList<String>();
-		int zero2=0;
-		int zero=0;
-		for(int i=0;i<arr.length;i++) {
-			if(!types.contains(ac.getAtom(i).getSymbol())) {
-				types.add(ac.getAtom(i).getSymbol());
-				zero=zero+countAtomType(ac,ac.getAtom(i).getSymbol());
-				if(!checkZeros(arr,zero)) {
-					zero2+=zero;
-					break;
-				}
-			}
-		}
-		return zero2;
-	}
-	
-	public static boolean checkZeros(int[] arr, int limit) throws CDKException {
-		boolean zeros=true;
-		for(int i=0;i<limit;i++) {
-			if(arr[i]!=0) {
-				zeros=false;
-				break;
-			}
-		}
-		return zeros;
-	}
-	
-	public static int countAtomType(IAtomContainer ac, String symbol) throws CDKException {
-		Object[] param = { symbol };
-		AtomCountDescriptor atomCounter= new AtomCountDescriptor();
-		atomCounter.setParameters(param);
-		DescriptorValue value = atomCounter.calculate(ac);
-		int result=((IntegerResult) value.getValue()).intValue();
-		return result;
-	};
-	
-	/** 
-	 * Distributes the hydrogens to the atoms in all the possible ways.
-	 * @throws CDKException 
-	 */
-	
-	public static void distribute(int hydrogen,int[]arr) throws CloneNotSupportedException, CDKException {
-		if(hydrogen == 0){
-			if(isotopes==1 && arr[0]!=0) {
-				/**
-				 * If the array starts with 0, the size should be longer than number of carbons.
-				 * Otherwise, it would be the symmetric distribution of hydrogens into carbons
-				 * like {3,3,0,0,0,0} and {0,0,0,0,3,3}.
-				 */
-				distributions.add(setHydrogens(acontainer,arr));
-			}else if(isotopes>1 && arr.length>=zeros(acontainer,arr)) {
-				distributions.add(setHydrogens(acontainer,arr));
-			}
-		}else if((size-arr.length)==1) {	
-			int add=Math.min(hydrogen,capacity[arr.length]); //Just to add maximum the capacity not all the remaining carbons.
-			if(acontainer.getAtom(size-2).getSymbol()!=acontainer.getAtom(size-1).getSymbol()) {	
-				distribute(0,addElement(arr,add));
-			}else {
-				if(arr[arr.length-1]<=add){
-					distribute(0,addElement(arr,add));
-				}
-			}
-		}else { 
-			for(int i = Math.min(capacity[arr.length],hydrogen); i >= findMin(hydrogen,arr,arr.length); i--) {				
-				if(arr.length==0) {
-					distribute((hydrogen-i),addElement(arr,i)); //First step to add a number to the empty array.
-				}
-				if((arr.length)>0) {
-					if(arr[arr.length-1]<=i){ // It extends the array in ascending order. So no need to check duplicates
-						distribute((hydrogen-i),addElement(arr,i));
-					}
-				}
-			}
-		}
-	}
-	
-	/**
-	 * Just adding element to an array
 	 */
 	
 	public static int[] addElement(int[] a, int e) {
@@ -232,28 +71,232 @@ public class HydrogenDistributor {
         return a;
     }
 	
-	/**
-	 * To decide at least how many hydrogen distributed to an atom, the capacities of the next ones are calculated.
-	 */
-	
-	public static int otherCapacities(int index) {
-		int count=0;
-		for(int i=index+1;i<capacity.length;i++) {
-			count=count+capacity[i];
+	public static int[] setValues(IMolecularFormula formula) {
+		int[] capacity = new int[formula.getIsotopeCount()];
+		int[] valences = new int[formula.getIsotopeCount()];
+		int[] totalAtom = new int[formula.getIsotopeCount()];
+		int i=0;
+		for(IIsotope top:formula.isotopes()) {
+			totalAtom[i]=formula.getIsotopeCount(top);
+			valences[i]=capacities.get(top.getAtomicNumber());
+			capacity[i]=capacities.get(top.getAtomicNumber())*formula.getIsotopeCount(top);
+			i++;
 		}
-		return count;
+		HydrogenDistributor.capacity=capacity;
+		HydrogenDistributor.valences=valences;
+		HydrogenDistributor.totalAtom=totalAtom;
+		return capacity;
+	}
+	
+	public static int sum(int[] array) {
+		int sum=0;
+		for(int i=0;i<array.length;i++) {
+			sum=sum+array[i];
+		}
+		return sum;
+	}
+	
+	public static int[] mergeArrays(List<int[]> arrays) {
+		int size = 0;
+		for (int[] array : arrays) {
+			size += array.length;
+		}
+		int[] mergedArray = new int[size];
+		int index = 0;
+		for (int[] array : arrays) {
+			for (int i : array) {
+				mergedArray[index++] = i;
+		    }
+		}
+		return mergedArray;
+	}
+	
+	public static int[] arraySum(int[] a, int[] b) {
+		List<int[]> arrays= new ArrayList<int[]>();
+		arrays.add(a);
+		arrays.add(b);
+		return mergeArrays(arrays);
+	}
+	
+	public static List<List<int[]>> buildLists(int n){
+		List<List<int[]>> lists= new ArrayList<List<int[]>>();
+		for (int i=0; i<n; ++i) {
+			List<int[]> ilist= new ArrayList<int[]>();
+			lists.add(ilist);
+		}
+		return lists;
+	}
+	public static List<int[]> combineArrays(LinkedList<List <int[]>> lists) {
+		List<int[]> comb = new ArrayList<int[]>();
+	    for (int[] s: lists.removeFirst()) {
+	    	comb.add(s);
+	    }
+	    while (!lists.isEmpty()) {
+	        List<int[]> list = lists.removeFirst();
+	        List<int[]> newComb =  new ArrayList<int[]>();
+	        for (int[] arr1: comb) { 
+	            for (int[] arr2 : list) { 
+	            	newComb.add(arraySum(arr1,arr2));
+	            }
+	        }
+	        comb = newComb;
+	    }
+	    return comb;
 	}
 	
 	/**
-	 * Based on the capacities of the following atoms, the minimum number of hydrogens to add to an atom is calculated.
+	 * To initialise the inputs and run the functions while recording the duration time.
+	 * @throws CDKException 
 	 */
 	
-	public static int findMin(int hydrogens,int[] arr, int index) {
-		int min=0;
-		if(hydrogens>otherCapacities(index)) {
-			min=min+(hydrogens-otherCapacities(index));
+	public static List<IAtomContainer> run(IMolecularFormula formula) throws FileNotFoundException, UnsupportedEncodingException, CloneNotSupportedException, CDKException {
+		long startTime = System.nanoTime(); //Recording the duration time.
+		int hydrogen=formula.getIsotopeCount(builder.newInstance(IIsotope.class, "H"));
+		String formulaString =MolecularFormulaManipulator.getString(formula);
+		HydrogenDistributor.isotopes=formula.getIsotopeCount()-1;
+		formula.removeIsotope(builder.newInstance(IIsotope.class, "H"));
+		IAtomContainer ac=MolecularFormulaManipulator.getAtomContainer(formula);
+		HydrogenDistributor.size=ac.getAtomCount();
+		HydrogenDistributor.acontainer=ac;
+		setValues(formula);
+		HydrogenDistributor.totalHydrogen=hydrogen;
+		if(verbose) {
+			System.out.println("For molecular formula "+ formulaString +", calculating all the possible distributions of "+totalHydrogen+" "+"hydrogens ..." );
 		}
-		return min;
+		List<int[]> result= new ArrayList<int[]>();
+		int count=0;
+		if(isotopes==1) {
+			List<int[]> iarrays= new ArrayList<int[]>();
+			int[] array = new int[0];
+			HydrogenDistributor.hydrogens2distribute=totalHydrogen;
+			distribute(iarrays,totalHydrogen,array,valences[0],totalAtom[0]);
+			count=iarrays.size();
+			result= iarrays;
+		}else {
+			List<int[]> distributions= new ArrayList<int[]>();
+			for(int[] dene:partition(totalHydrogen,isotopes,0)){
+				LinkedList<List <int[]>> lists = new LinkedList<List <int[]>>();
+				for(int i=0;i<dene.length;i++) {
+					HydrogenDistributor.hydrogens2distribute=dene[i];
+					List<int[]> iarrays= new ArrayList<int[]>();
+					int[] array = new int[0];
+					distribute(iarrays,dene[i],array,valences[i],totalAtom[i]);
+					lists.add(iarrays);
+				}	
+				List<int[]> combined=combineArrays(lists);
+				count+=combined.size();
+				distributions.addAll(combined);
+			}
+			result=distributions;
+		}
+		if(verbose) {
+			System.out.println("Number of distributions: "+count);
+		}
+		long endTime = System.nanoTime()- startTime;
+        double seconds = (double) endTime / 1000000000.0;
+		DecimalFormat d = new DecimalFormat(".###");
+		if(verbose) {
+			System.out.println("Duration:"+" "+d.format(seconds));
+		}
+
+		return generateAtomContainers(result);
+	}
+	
+	/**
+	 * These functions are built for the integer partitioning problem.
+	 */
+	
+	public static List<int[]> partition(int n, int d,int depth) {
+		if(d==depth) {
+			List<int[]> array= new ArrayList<int[]>();
+			int[] take=new int[0];
+			array.add(take);
+			return array;
+		}
+		return buildArray(n,d,depth);
+		
+	}
+	
+	public static List<int[]> buildArray(int n,int d, int depth){
+		List<int[]> array= new ArrayList<int[]>();
+		IntStream range = IntStream.rangeClosed(0,n);
+		for(int i:range.toArray()) {
+			for(int[] item: partition(n-i,d,depth+1)) {
+				if(i<=capacity[item.length]) {
+					item=addElement(item,i);
+			        if(item.length==d) {
+			        	if(sum(item)==totalHydrogen) {
+			        		array.add(item);
+			        	}
+			        }else {
+			        	array.add(item);
+			        }
+				}
+			}
+		}
+		return array;
+	}
+	
+	public static int[] addZeros(int[] array, int zeros) {
+		for(int i=0;i<zeros;i++) {
+			array=addElement(array,0);
+		}
+		return array;
+	}
+	
+	public static void distribute(List<int[]> arrays,int hydrogen,int[]arr,int valence, int numAtom) throws CloneNotSupportedException {
+		if(hydrogen==0 && sum(arr)==hydrogens2distribute){
+			if(arr.length!=numAtom) {
+				arr=addZeros(arr,(numAtom-arr.length));
+			}
+			arrays.add(arr);
+		}else if((numAtom-arr.length)==1) {
+			int add=Math.min(hydrogen,valence);
+			hydrogen=hydrogen-add;
+			if(arr.length==0) {
+				distribute(arrays,0,addElement(arr,add),valence,numAtom); 
+			}
+			if((arr.length)>0) {
+				if(arr[arr.length-1]<=add){ 
+					distribute(arrays,0,addElement(arr,add),valence,numAtom);
+				}
+			}
+		}else { 
+			for(int i = Math.min(valence,hydrogen); i > 0; i--) {
+				if(arr.length==0) {
+					distribute(arrays,(hydrogen-i),addElement(arr,i),valence,numAtom); 
+				}
+				if((arr.length)>0) {
+					if(arr[arr.length-1]<=i){ 
+						distribute(arrays,(hydrogen-i),addElement(arr,i),valence,numAtom);
+					}
+				}
+			}
+		}
+	}
+	
+	
+	
+	/**
+	 * Functions seting the implicit hydrogens of the atoms.
+	 * @throws CloneNotSupportedException 
+	 */
+	
+	public static List<IAtomContainer> generateAtomContainers(List<int[]> distributions) throws CloneNotSupportedException{
+		List<IAtomContainer> acontainers= new ArrayList<IAtomContainer>();
+		for(int[] array:distributions) {
+			IAtomContainer ac=acontainer.clone();
+			acontainers.add(setHydrogens(ac,array));
+		}
+		return acontainers;
+	}
+	
+	public static IAtomContainer setHydrogens(IAtomContainer ac,int[] distribution) throws CloneNotSupportedException {
+		IAtomContainer ac2=ac.clone();
+		for(int i=0;i<distribution.length;i++) {
+			ac2.getAtom(i).setImplicitHydrogenCount(distribution[i]);
+		}
+		return ac2;
 	}
 	
 	void parseArguments(String[] arguments) throws ParseException
@@ -295,11 +338,11 @@ public class HydrogenDistributor {
 		return options;
 	}
 	public static void main(String[] arguments) throws FileNotFoundException, UnsupportedEncodingException {
-		HydrogenDistributor distribution= new HydrogenDistributor();//C78H94N4O12
-		//String[] arguments1= {"-f","C78H94N4O12","-v"};
+		HydrogenDistributor distribution= new HydrogenDistributor();
+		//String[] arguments1= {"-f","C7H8ClNO2S","-v"};
 		try {
 			distribution.parseArguments(arguments);
-			HydrogenDistributor.initialise(HydrogenDistributor.formula);
+			HydrogenDistributor.run(HydrogenDistributor.formula);
 		} catch (Exception e) {
 			if (HydrogenDistributor.verbose) e.getCause(); 
 		}
