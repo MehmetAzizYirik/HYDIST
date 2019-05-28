@@ -1,7 +1,7 @@
 /**
  * MIT License
  *
- * Copyright (c) 2019 Mehmet Aziz Yirik
+ * Copyright (c) 2018 Mehmet Aziz Yirik
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
