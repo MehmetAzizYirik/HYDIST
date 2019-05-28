@@ -26,7 +26,7 @@
 /**
  * This class is for the distribution of hydrogens into chemical structures.
  * For a given chemical formula, all the possible distributions of the hydrogen
- * atoms to the hetero atoms. 
+ * atoms to the hetero atoms are generated. 
  * 
  * @author Mehmet Aziz Yirik
  */
