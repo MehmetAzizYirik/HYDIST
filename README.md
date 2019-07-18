@@ -19,7 +19,7 @@ It is assumed that users have git on their system and have initialised their loc
 To download HMD source code:
 
 ```
-$ git clone https://https://github.com/MehmetAzizYirik/HydrogenDistributor.git
+$ git clone https://github.com/MehmetAzizYirik/HydrogenDistributor.git
 ```
 ## Compiling
 
