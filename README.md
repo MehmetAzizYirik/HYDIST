@@ -16,7 +16,7 @@ In this chemical problem, the algorithm calculates all the n-tuples (n indicates
 
 It is assumed that users have git on their system and have initialised their local directory. For more information [set-up-git](https://help.github.com/articles/set-up-git/ )
 
-To download HMD source code:
+To download HydrogenDistributor source code:
 
 ```
 $ git clone https://github.com/MehmetAzizYirik/HydrogenDistributor.git
